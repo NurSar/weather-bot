@@ -1,8 +1,13 @@
+
 import os
 import pandas as pd
+from datetime import datetime
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
-from _helpers import get_5day_forecast_VS, get_yesterday_VS
+from _helpers import get_5day_forecast_VS, get_yesterday_VS, get_logger
+
+# Set up logger
+logger = get_logger("weather")
 
 # Load environment variables
 load_dotenv()
@@ -16,17 +21,18 @@ DB_PATH = os.getenv('DATABASE_URL')
 engine = create_engine(DB_PATH)
 
 if __name__ == '__main__':
+    date = datetime.now()
     # Fetch 5-day forecast as a DataFrame
-    forecast_df = get_5day_forecast_VS(LAT, LON, API_KEY)
+    forecast_df = get_5day_forecast_VS(date, LAT, LON, API_KEY)
 
     # Push the DataFrame into the database table 'forecast_data'
     forecast_df.to_sql('forecast_data', engine, if_exists='append', index=False)
-    print("✅ 5-day forecast data written to database!")
+    logger.info("✅ 5-day forecast data written to database!")
 
     # Fetch yesterday data as a DataFrame
-    historical_df = get_yesterday_VS(LAT, LON, API_KEY)
+    historical_df = get_yesterday_VS(date, LAT, LON, API_KEY)
 
     # Push the DataFrame into the database table 'historical_data'
     historical_df.to_sql('historical_data', engine, if_exists='append', index=False)
-    print("✅ Yesterday's data written to database!")
+    logger.info("✅ Yesterday's data written to database!")
 
