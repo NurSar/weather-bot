@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-API_KEY_1 = os.getenv('OPENWEATHER_API_KEY')
 API_KEY_2 = os.getenv('VISUALCROSSING_API_KEY')
 LAT = os.getenv('LATITUDE')
 LON = os.getenv('LONGITUDE')
@@ -51,6 +50,8 @@ def get_5day_forecast_VS(datenow, lat=LAT, lon=LON, api_key=API_KEY_2, units='me
                 'feels': hour['feelslike'],
                 'humidity': hour['humidity'],
                 'precip': hour['precip'],
+                'wind': hour['windspeed'],
+                'condition': hour['icon'],
             })
     return pd.DataFrame(records)
 
@@ -76,5 +77,7 @@ def get_yesterday_VS(datenow, lat=LAT, lon=LON, api_key=API_KEY_2, units='metric
                 'feels': hour['feelslike'],
                 'humidity': hour['humidity'],
                 'precip': hour['precip'],
+                'wind': hour['windspeed'],
+                'condition': hour['icon'],
             })
     return pd.DataFrame(records)
