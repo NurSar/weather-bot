@@ -1,48 +1,32 @@
 import os
-import requests
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from datetime import datetime
+import pandas as pd
+from sqlalchemy import create_engine
 from dotenv import load_dotenv
+from _helpers import get_5day_forecast_VS, get_yesterday_VS
 
 # Load environment variables
 load_dotenv()
 
-API_KEY = os.getenv('OPENWEATHER_API_KEY')
-lat = os.getenv('LATITUDE')
-lon = os.getenv('LONGITUDE')
-DB_PATH = 'sqlite:///weather.db'
+API_KEY = os.getenv('VISUALCROSSING_API_KEY')
+LAT = os.getenv('LATITUDE')
+LON = os.getenv('LONGITUDE')
+CITY= os.getenv('CITY')
+DB_PATH = os.getenv('DATABASE_URL')
 
-Base = declarative_base()
-
-class Weather(Base):
-    __tablename__ = 'weather'
-    id = Column(Integer, primary_key=True)
-    city = Column(String)
-    temperature = Column(Float)
-    timestamp = Column(DateTime, default=datetime.utcnow)
-
-def get_temperature(city):
-    url = f'https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={API_KEY}'
-    response = requests.get(url)
-    data = response.json()
-    return data['main']['temp']
-
-def save_temperature(city, temperature):
-    engine = create_engine(DB_PATH)
-    Base.metadata.create_all(engine)
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    weather = Weather(city=city, temperature=temperature)
-    session.add(weather)
-    session.commit()
-    session.close()
-
-def main():
-    temp = get_temperature(CITY)
-    save_temperature(CITY, temp)
-    print(f"Saved temperature for {CITY}: {temp}°C")
+engine = create_engine(DB_PATH)
 
 if __name__ == '__main__':
-    main()
+    # Fetch 5-day forecast as a DataFrame
+    forecast_df = get_5day_forecast_VS(LAT, LON, API_KEY)
+
+    # Push the DataFrame into the database table 'forecast_data'
+    forecast_df.to_sql('forecast_data', engine, if_exists='append', index=False)
+    print("✅ 5-day forecast data written to database!")
+
+    # Fetch yesterday data as a DataFrame
+    historical_df = get_yesterday_VS(LAT, LON, API_KEY)
+
+    # Push the DataFrame into the database table 'historical_data'
+    historical_df.to_sql('historical_data', engine, if_exists='append', index=False)
+    print("✅ Yesterday's data written to database!")
+
